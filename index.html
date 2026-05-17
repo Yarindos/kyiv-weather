@@ -4,371 +4,471 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Погода · Київ</title>
-<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@300;400;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@200;300;400;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  :root {
-    --bg: #0b0f1a;
-    --surface: rgba(255,255,255,0.04);
-    --border: rgba(255,255,255,0.08);
-    --text: #e8eaf0;
-    --muted: rgba(232,234,240,0.45);
-    --blue: #3b82f6;
-    --yellow: #fbbf24;
-    --rain: #60a5fa;
-    --sun: #fde68a;
-    --cloud: #94a3b8;
-    --glow-blue: rgba(59,130,246,0.18);
-    --glow-yellow: rgba(251,191,36,0.12);
-  }
+body.night {
+  --bg1: #020614; --bg2: #0a0e2a; --bg3: #060d1f;
+  --surface: rgba(255,255,255,0.04); --border: rgba(255,255,255,0.07);
+  --text: #dde4f5; --muted: rgba(221,228,245,0.4);
+  --accent: #818cf8; --accent2: #c4b5fd;
+  --glow: rgba(129,140,248,0.15); --card-hover: rgba(129,140,248,0.08);
+}
+body.dawn {
+  --bg1: #1a0a2e; --bg2: #3d1a5c; --bg3: #7c3d6e;
+  --surface: rgba(255,255,255,0.06); --border: rgba(255,200,150,0.15);
+  --text: #ffeedd; --muted: rgba(255,238,221,0.5);
+  --accent: #fb923c; --accent2: #f472b6;
+  --glow: rgba(251,146,60,0.2); --card-hover: rgba(251,146,60,0.08);
+}
+body.day {
+  --bg1: #0f172a; --bg2: #1e3a5f; --bg3: #1e40af;
+  --surface: rgba(255,255,255,0.06); --border: rgba(147,210,255,0.15);
+  --text: #e0f2fe; --muted: rgba(224,242,254,0.5);
+  --accent: #38bdf8; --accent2: #fbbf24;
+  --glow: rgba(56,189,248,0.2); --card-hover: rgba(56,189,248,0.08);
+}
+body.evening {
+  --bg1: #0f0a00; --bg2: #2d1a00; --bg3: #7c3500;
+  --surface: rgba(255,255,255,0.05); --border: rgba(251,146,60,0.15);
+  --text: #fef3c7; --muted: rgba(254,243,199,0.45);
+  --accent: #f97316; --accent2: #fb7185;
+  --glow: rgba(249,115,22,0.2); --card-hover: rgba(249,115,22,0.08);
+}
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Inter', sans-serif;
-    min-height: 100vh;
-    overflow-x: hidden;
-    position: relative;
-  }
+body {
+  background: linear-gradient(160deg, var(--bg1) 0%, var(--bg2) 50%, var(--bg3) 100%);
+  color: var(--text); font-family: 'Inter', sans-serif;
+  min-height: 100vh; overflow-x: hidden; position: relative;
+  transition: background 2s ease, color 2s ease;
+}
 
-  /* Animated background */
-  .bg-mesh {
-    position: fixed; inset: 0; z-index: 0; pointer-events: none;
-    background:
-      radial-gradient(ellipse 60% 50% at 20% 20%, rgba(59,130,246,0.12) 0%, transparent 70%),
-      radial-gradient(ellipse 50% 40% at 80% 70%, rgba(251,191,36,0.07) 0%, transparent 70%),
-      radial-gradient(ellipse 80% 60% at 50% 100%, rgba(30,58,138,0.15) 0%, transparent 60%);
-    animation: meshMove 12s ease-in-out infinite alternate;
-  }
-  @keyframes meshMove {
-    0%   { opacity: 0.8; transform: scale(1); }
-    100% { opacity: 1;   transform: scale(1.05); }
-  }
+#skyCanvas { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+.stars { position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0; transition: opacity 2s; }
+body.night .stars { opacity: 1; }
+body.dawn .stars  { opacity: 0.3; }
 
-  /* Rain animation */
-  .rain-canvas {
-    position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.25;
-  }
+.wrapper { position: relative; z-index: 1; max-width: 900px; margin: 0 auto; padding: 40px 20px 80px; }
 
-  .wrapper {
-    position: relative; z-index: 1;
-    max-width: 860px; margin: 0 auto;
-    padding: 48px 24px 80px;
-  }
+header {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  margin-bottom: 44px; animation: fadeUp 0.8s ease both;
+}
+.city {
+  font-family: 'Unbounded', sans-serif;
+  font-size: clamp(2rem, 6vw, 3.8rem); font-weight: 700;
+  letter-spacing: -0.03em; line-height: 1;
+  background: linear-gradient(135deg, var(--text) 0%, var(--accent) 60%, var(--accent2) 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  transition: background 2s;
+}
+.time-badge {
+  display: inline-flex; align-items: center; gap: 6px; margin-top: 10px;
+  font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted);
+  border: 1px solid var(--border); border-radius: 99px; padding: 4px 12px;
+  backdrop-filter: blur(8px); background: var(--surface);
+}
+.time-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.7)} }
 
-  /* Header */
-  header {
-    display: flex; align-items: flex-end; justify-content: space-between;
-    margin-bottom: 52px;
-    animation: fadeUp 0.7s ease both;
-  }
-  .city {
-    font-family: 'Unbounded', sans-serif;
-    font-size: clamp(2rem, 6vw, 3.5rem);
-    font-weight: 700;
-    letter-spacing: -0.03em;
-    line-height: 1;
-    background: linear-gradient(135deg, #e8eaf0 0%, #60a5fa 60%, #fbbf24 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-  .flag { font-size: 2rem; margin-left: 12px; vertical-align: middle; }
-  .updated {
-    font-size: 0.75rem;
-    color: var(--muted);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    padding-bottom: 6px;
-  }
+#liveClock {
+  font-family: 'Unbounded', sans-serif;
+  font-size: clamp(1.4rem, 4vw, 2.2rem); font-weight: 200;
+  letter-spacing: 0.04em; color: var(--text); opacity: 0.9; text-align: right;
+}
+.clock-date { font-size: 0.72rem; color: var(--muted); margin-top: 4px; text-align: right; }
 
-  /* Current weather card */
-  .current-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 24px;
-    padding: 40px;
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 24px;
-    align-items: center;
-    margin-bottom: 24px;
-    position: relative;
-    overflow: hidden;
-    animation: fadeUp 0.7s 0.1s ease both;
-  }
-  .current-card::before {
-    content: '';
-    position: absolute; inset: 0;
-    background: linear-gradient(135deg, var(--glow-blue), transparent 60%);
-    border-radius: 24px;
-  }
-  .current-label {
-    font-size: 0.7rem;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 12px;
-  }
-  .current-temp {
-    font-family: 'Unbounded', sans-serif;
-    font-size: clamp(4rem, 12vw, 7rem);
-    font-weight: 300;
-    line-height: 1;
-    letter-spacing: -0.04em;
-    color: var(--text);
-  }
-  .current-temp sup {
-    font-size: 0.35em;
-    vertical-align: super;
-    color: var(--blue);
-  }
-  .current-desc {
-    font-size: 1.1rem;
-    color: var(--muted);
-    margin-top: 8px;
-    font-weight: 300;
-  }
-  .current-icon {
-    font-size: clamp(4rem, 10vw, 6rem);
-    text-align: center;
-    filter: drop-shadow(0 0 24px rgba(96,165,250,0.4));
-    animation: floatIcon 4s ease-in-out infinite;
-  }
-  @keyframes floatIcon {
-    0%, 100% { transform: translateY(0); }
-    50%       { transform: translateY(-10px); }
-  }
+.current-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 28px;
+  padding: 36px 40px; display: grid; grid-template-columns: 1fr auto;
+  gap: 20px; align-items: center; margin-bottom: 20px;
+  position: relative; overflow: hidden; backdrop-filter: blur(20px);
+  animation: fadeUp 0.8s 0.1s ease both; transition: border-color 2s, background 2s;
+}
+.current-card::before {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(ellipse 80% 60% at 0% 50%, var(--glow), transparent 70%);
+  pointer-events: none; transition: background 2s;
+}
+.current-label { font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+.current-temp {
+  font-family: 'Unbounded', sans-serif;
+  font-size: clamp(4.5rem, 13vw, 8rem); font-weight: 200;
+  line-height: 1; letter-spacing: -0.05em; color: var(--text);
+}
+.current-temp sup { font-size: 0.3em; vertical-align: super; color: var(--accent); }
+.current-desc { font-size: 1rem; color: var(--muted); margin-top: 6px; font-weight: 300; }
+.current-feels { font-size: 0.78rem; color: var(--muted); margin-top: 4px; opacity: 0.7; }
+.current-icon {
+  font-size: clamp(4rem, 10vw, 6.5rem); display: block;
+  filter: drop-shadow(0 0 30px var(--glow));
+  animation: floatIcon 5s ease-in-out infinite;
+}
+@keyframes floatIcon { 0%,100%{transform:translateY(0) rotate(-3deg)} 50%{transform:translateY(-14px) rotate(3deg)} }
 
-  /* Week forecast */
-  .section-label {
-    font-size: 0.7rem;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 16px;
-    animation: fadeUp 0.7s 0.2s ease both;
-  }
-  .week-grid {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 12px;
-    margin-bottom: 24px;
-  }
-  .day-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 18px;
-    padding: 20px 14px;
-    text-align: center;
-    transition: transform 0.25s ease, border-color 0.25s ease, background 0.25s ease;
-    cursor: default;
-    animation: fadeUp 0.6s ease both;
-  }
-  .day-card:hover {
-    transform: translateY(-6px);
-    border-color: rgba(59,130,246,0.35);
-    background: rgba(59,130,246,0.07);
-  }
-  .day-card:nth-child(1) { animation-delay: 0.25s; }
-  .day-card:nth-child(2) { animation-delay: 0.32s; }
-  .day-card:nth-child(3) { animation-delay: 0.39s; }
-  .day-card:nth-child(4) { animation-delay: 0.46s; }
-  .day-card:nth-child(5) { animation-delay: 0.53s; }
+.sun-arc-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 20px; padding: 24px 28px; margin-bottom: 20px;
+  backdrop-filter: blur(16px); animation: fadeUp 0.8s 0.18s ease both;
+}
+.section-label { font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin-bottom: 18px; }
+#sunArcSvg { width: 100%; height: 90px; display: block; }
 
-  .day-name {
-    font-size: 0.65rem;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 10px;
-  }
-  .day-icon { font-size: 1.8rem; margin-bottom: 10px; line-height: 1; }
-  .day-temp {
-    font-family: 'Unbounded', sans-serif;
-    font-size: 1.3rem;
-    font-weight: 400;
-    color: var(--text);
-    letter-spacing: -0.02em;
-  }
-  .day-temp span { font-size: 0.6em; color: var(--blue); }
-  .rain-bar-wrap {
-    margin-top: 12px;
-    background: rgba(255,255,255,0.06);
-    border-radius: 99px;
-    height: 4px;
-    overflow: hidden;
-  }
-  .rain-bar {
-    height: 100%;
-    border-radius: 99px;
-    background: linear-gradient(90deg, var(--blue), #818cf8);
-    transition: width 1s 0.8s ease;
-    width: 0;
-  }
-  .rain-pct {
-    font-size: 0.65rem;
-    color: var(--rain);
-    margin-top: 6px;
-    opacity: 0.8;
-  }
+.hourly-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 20px; padding: 24px 28px; margin-bottom: 20px;
+  backdrop-filter: blur(16px); animation: fadeUp 0.8s 0.25s ease both;
+}
+.hourly-scroll { overflow-x: auto; scrollbar-width: none; }
+.hourly-scroll::-webkit-scrollbar { display: none; }
+.hourly-inner { display: flex; gap: 4px; min-width: max-content; }
+.hour-col {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 10px 12px; border-radius: 14px; min-width: 58px;
+  transition: background 0.2s, transform 0.2s; cursor: default; position: relative;
+}
+.hour-col:hover { background: var(--card-hover); transform: translateY(-4px); }
+.hour-col.now { background: var(--card-hover); border: 1px solid var(--border); }
+.hour-col.now::before {
+  content: 'зараз'; position: absolute; top: -22px;
+  font-size: 0.55rem; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--accent); font-weight: 500;
+}
+.h-time { font-size: 0.62rem; color: var(--muted); margin-bottom: 8px; }
+.h-icon { font-size: 1.2rem; margin-bottom: 6px; }
+.h-temp { font-family: 'Unbounded', sans-serif; font-size: 0.9rem; color: var(--text); }
+.h-rain { font-size: 0.58rem; color: var(--accent); margin-top: 4px; opacity: 0.8; }
+.sparkline-wrap { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
+#tempSparkline { width: 100%; height: 60px; display: block; overflow: visible; }
 
-  /* Today highlight */
-  .day-card.today {
-    border-color: rgba(251,191,36,0.3);
-    background: rgba(251,191,36,0.05);
-  }
-  .day-card.today .day-name { color: var(--yellow); }
-  .today-badge {
-    font-size: 0.55rem;
-    background: var(--yellow);
-    color: #0b0f1a;
-    border-radius: 99px;
-    padding: 2px 7px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    display: inline-block;
-    margin-bottom: 8px;
-  }
+.week-grid {
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px;
+  margin-bottom: 20px; animation: fadeUp 0.8s 0.35s ease both;
+}
+.day-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 18px; padding: 18px 12px; text-align: center;
+  transition: transform 0.25s, border-color 0.25s, background 0.25s;
+  cursor: default; backdrop-filter: blur(12px); position: relative;
+}
+.day-card:hover { transform: translateY(-7px); border-color: var(--accent); background: var(--card-hover); }
+.day-card.today { border-color: rgba(129,140,248,0.4); }
+.today-badge {
+  position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
+  font-size: 0.52rem; background: var(--accent); color: #000;
+  border-radius: 99px; padding: 3px 9px; font-weight: 700;
+  letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap;
+}
+.day-name { font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+.day-icon { font-size: 1.7rem; margin-bottom: 8px; }
+.day-temp { font-family: 'Unbounded', sans-serif; font-size: 1.2rem; color: var(--text); }
+.day-temp span { font-size: 0.6em; color: var(--accent); }
+.rain-bar-wrap { margin-top: 10px; background: rgba(255,255,255,0.06); border-radius: 99px; height: 3px; overflow: hidden; }
+.rain-bar { height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width 1.2s 0.6s ease; width: 0; }
+.rain-pct { font-size: 0.6rem; color: var(--accent); margin-top: 5px; opacity: 0.8; }
 
-  /* Footer */
-  footer {
-    margin-top: 48px;
-    text-align: center;
-    font-size: 0.72rem;
-    color: var(--muted);
-    letter-spacing: 0.05em;
-    animation: fadeUp 0.7s 0.7s ease both;
-  }
-  footer span { color: var(--blue); }
+.fact-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 20px; padding: 28px 32px; margin-bottom: 20px;
+  backdrop-filter: blur(16px); position: relative; overflow: hidden;
+  animation: fadeUp 0.8s 0.45s ease both;
+}
+.fact-card::after { content: '🏛'; position: absolute; right: 24px; bottom: 16px; font-size: 4rem; opacity: 0.08; }
+.fact-eyebrow { font-size: 0.65rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin-bottom: 10px; font-weight: 500; }
+.fact-text { font-size: 0.95rem; line-height: 1.65; color: var(--text); opacity: 0.85; font-weight: 300; }
+.fact-nav { display: flex; gap: 8px; margin-top: 16px; }
+.fact-btn {
+  background: var(--surface); border: 1px solid var(--border); color: var(--muted);
+  border-radius: 99px; padding: 5px 14px; font-size: 0.7rem; cursor: pointer;
+  transition: 0.2s; font-family: 'Inter', sans-serif;
+}
+.fact-btn:hover { border-color: var(--accent); color: var(--accent); }
 
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(22px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
+footer { text-align: center; font-size: 0.7rem; color: var(--muted); margin-top: 40px; letter-spacing: 0.05em; animation: fadeUp 0.8s 0.6s ease both; }
+footer span { color: var(--accent); }
 
-  @media (max-width: 580px) {
-    .week-grid { grid-template-columns: repeat(3, 1fr); }
-    .week-grid .day-card:nth-child(4),
-    .week-grid .day-card:nth-child(5) { grid-column: span 1; }
-    .current-card { grid-template-columns: 1fr; text-align: center; }
-    .current-icon { order: -1; }
-  }
-  @media (max-width: 380px) {
-    .week-grid { grid-template-columns: repeat(2, 1fr); }
-  }
+@keyframes fadeUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+@keyframes starTwinkle { from{opacity:0.2;transform:scale(1)} to{opacity:1;transform:scale(1.6)} }
+
+@media(max-width:580px){
+  .week-grid{grid-template-columns:repeat(3,1fr)}
+  .current-card{grid-template-columns:1fr}
+  .current-icon{font-size:4rem;text-align:center}
+  header{flex-direction:column;gap:12px}
+  #liveClock{text-align:left} .clock-date{text-align:left}
+}
+@media(max-width:380px){.week-grid{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
 <body>
-<canvas class="rain-canvas" id="rain"></canvas>
-<div class="bg-mesh"></div>
-
+<div class="stars" id="starsLayer"></div>
+<canvas id="skyCanvas"></canvas>
 <div class="wrapper">
-  <header>
-    <div>
-      <div class="city">Київ <span class="flag">🇺🇦</span></div>
-    </div>
-    <div class="updated" id="updatedTime">оновлено зараз</div>
-  </header>
 
-  <div class="current-card">
-    <div>
-      <div class="current-label">Зараз · Неділя</div>
-      <div class="current-temp">18<sup>°C</sup></div>
-      <div class="current-desc">🌧 Дрібний дощ</div>
+<header>
+  <div>
+    <div class="city">Київ 🇺🇦</div>
+    <div class="time-badge">
+      <div class="time-dot"></div>
+      <span id="timePeriodLabel">ніч</span>&nbsp;·&nbsp;живі дані
     </div>
-    <div class="current-icon">🌧</div>
   </div>
+  <div>
+    <div id="liveClock">--:--:--</div>
+    <div class="clock-date" id="liveDate"></div>
+  </div>
+</header>
 
-  <div class="section-label">Прогноз на тиждень</div>
-  <div class="week-grid" id="weekGrid"></div>
+<div class="current-card">
+  <div>
+    <div class="current-label">Зараз · <span id="periodEmoji">🌙</span> <span id="currentPeriodName">Ніч</span></div>
+    <div class="current-temp">18<sup>°C</sup></div>
+    <div class="current-desc">🌧 Дрібний дощ</div>
+    <div class="current-feels">Відчувається як 16°C · Вологість 74%</div>
+  </div>
+  <div><span class="current-icon" id="mainIcon">🌧</span></div>
+</div>
 
-  <footer>
-    Дані: Open-Meteo · Побудовано з <span>♥</span> для Києва
-  </footer>
+<div class="sun-arc-card">
+  <div class="section-label">☀️ Схід — Захід сонця · 05:27 — 20:48</div>
+  <svg id="sunArcSvg" viewBox="0 0 800 90" preserveAspectRatio="none">
+    <defs>
+      <linearGradient id="arcGrad" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="#f97316" stop-opacity="0.3"/>
+        <stop offset="50%" stop-color="#fbbf24" stop-opacity="0.7"/>
+        <stop offset="100%" stop-color="#f97316" stop-opacity="0.3"/>
+      </linearGradient>
+    </defs>
+    <line x1="0" y1="80" x2="800" y2="80" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+    <path d="M 60,80 Q 400,-20 740,80" fill="none" stroke="url(#arcGrad)" stroke-width="2" stroke-dasharray="6 4"/>
+    <text x="60" y="75" fill="rgba(255,255,255,0.3)" font-size="11" font-family="Inter" text-anchor="middle">схід</text>
+    <text x="740" y="75" fill="rgba(255,255,255,0.3)" font-size="11" font-family="Inter" text-anchor="middle">захід</text>
+    <circle id="sunGlow" cx="400" cy="30" r="20" fill="#fbbf24" opacity="0.15">
+      <animate attributeName="r" values="20;28;20" dur="3s" repeatCount="indefinite"/>
+    </circle>
+    <circle id="sunMarker" cx="400" cy="30" r="9" fill="#fbbf24" opacity="0.95">
+      <animate attributeName="r" values="9;11;9" dur="3s" repeatCount="indefinite"/>
+    </circle>
+  </svg>
+</div>
+
+<div class="hourly-card">
+  <div class="section-label">🌡 Температура протягом дня</div>
+  <div class="hourly-scroll"><div class="hourly-inner" id="hourlyInner"></div></div>
+  <div class="sparkline-wrap">
+    <svg id="tempSparkline" viewBox="0 0 760 60" preserveAspectRatio="none"></svg>
+  </div>
+</div>
+
+<div class="section-label" style="animation:fadeUp 0.8s 0.3s ease both;opacity:0;animation-fill-mode:both">📅 Прогноз на тиждень</div>
+<div class="week-grid" id="weekGrid"></div>
+
+<div class="fact-card">
+  <div class="fact-eyebrow">💡 Цікавий факт про Київ</div>
+  <div class="fact-text" id="factText"></div>
+  <div class="fact-nav">
+    <button class="fact-btn" onclick="prevFact()">← Назад</button>
+    <button class="fact-btn" onclick="nextFact()">Далі →</button>
+  </div>
+</div>
+
+<footer>Open-Meteo · timeanddate.com · Зроблено з <span>♥</span> · <span id="footerTime"></span></footer>
 </div>
 
 <script>
-// Weather data (real, May 17 2026)
-const days = [
-  { date:'2026-05-17', name:'Нд', high:22, rain:20, icon:'🌦' },
-  { date:'2026-05-18', name:'Пн', high:22, rain:45, icon:'🌧' },
-  { date:'2026-05-19', name:'Вт', high:26, rain:25, icon:'⛅' },
-  { date:'2026-05-20', name:'Ср', high:25, rain:40, icon:'🌦' },
-  { date:'2026-05-21', name:'Чт', high:26, rain:35, icon:'⛅' },
+// === THEME ===
+const themes = {
+  night:   {label:'Ніч',      emoji:'🌙', icon:'🌧', cls:'night'},
+  dawn:    {label:'Світанок', emoji:'🌅', icon:'🌦', cls:'dawn'},
+  day:     {label:'День',     emoji:'☀️', icon:'⛅', cls:'day'},
+  evening: {label:'Вечір',    emoji:'🌇', icon:'🌦', cls:'evening'},
+};
+function getTheme(h){ return h>=22||h<5?'night':h<8?'dawn':h<17?'day':'evening'; }
+function applyTheme(name){
+  const t=themes[name];
+  document.body.className=t.cls;
+  document.getElementById('timePeriodLabel').textContent=t.label;
+  document.getElementById('periodEmoji').textContent=t.emoji;
+  document.getElementById('currentPeriodName').textContent=t.label;
+  document.getElementById('mainIcon').textContent=t.icon;
+}
+
+// === CLOCK ===
+const ukDays=['Неділя','Понеділок','Вівторок','Середа','Четвер','Пятниця','Субота'];
+const ukMonths=['січня','лютого','березня','квітня','травня','червня','липня','серпня','вересня','жовтня','листопада','грудня'];
+function updateClock(){
+  const n=new Date(),h=n.getHours(),m=n.getMinutes(),s=n.getSeconds();
+  document.getElementById('liveClock').textContent=
+    `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  document.getElementById('liveDate').textContent=
+    `${ukDays[n.getDay()]}, ${n.getDate()} ${ukMonths[n.getMonth()]}`;
+  document.getElementById('footerTime').textContent=
+    `оновлено ${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+  applyTheme(getTheme(h));
+  updateSun(h,m);
+}
+setInterval(updateClock,1000); updateClock();
+
+// === SUN ARC ===
+function updateSun(h,m){
+  const rise=5*60+27,set=20*60+48,total=set-rise;
+  const t=Math.max(0,Math.min(1,(h*60+m-rise)/total));
+  const P0={x:60,y:80},P1={x:400,y:-20},P2={x:740,y:80};
+  const x=(1-t)*(1-t)*P0.x+2*t*(1-t)*P1.x+t*t*P2.x;
+  const y=(1-t)*(1-t)*P0.y+2*t*(1-t)*P1.y+t*t*P2.y;
+  ['sunMarker','sunGlow'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el){el.setAttribute('cx',x);el.setAttribute('cy',y);}
+  });
+}
+
+// === HOURLY ===
+const hourlyData=[
+  {h:0,t:14,icon:'🌧',rain:30},{h:2,t:13,icon:'🌧',rain:25},
+  {h:4,t:12,icon:'🌫',rain:15},{h:6,t:13,icon:'🌦',rain:20},
+  {h:8,t:15,icon:'⛅',rain:20},{h:10,t:18,icon:'🌤',rain:15},
+  {h:12,t:21,icon:'⛅',rain:20},{h:14,t:22,icon:'⛅',rain:25},
+  {h:16,t:21,icon:'🌦',rain:35},{h:18,t:19,icon:'🌦',rain:40},
+  {h:20,t:17,icon:'🌧',rain:45},{h:22,t:15,icon:'🌧',rain:35},
 ];
+const nowH=new Date().getHours();
+(function buildHourly(){
+  const inner=document.getElementById('hourlyInner');
+  hourlyData.forEach(d=>{
+    const isNow=Math.abs(d.h-nowH)<=1;
+    const col=document.createElement('div');
+    col.className='hour-col'+(isNow?' now':'');
+    col.innerHTML=`<div class="h-time">${String(d.h).padStart(2,'0')}:00</div>
+      <div class="h-icon">${d.icon}</div>
+      <div class="h-temp">${d.t}°</div>
+      <div class="h-rain">💧${d.rain}%</div>`;
+    inner.appendChild(col);
+  });
+  // sparkline
+  const svg=document.getElementById('tempSparkline');
+  const temps=hourlyData.map(d=>d.t);
+  const minT=Math.min(...temps)-1,maxT=Math.max(...temps)+1;
+  const W=760,H=60,pad=22;
+  const xs=hourlyData.map((_,i)=>pad+i*(W-pad*2)/(hourlyData.length-1));
+  const ys=temps.map(t=>H-pad/2-(t-minT)/(maxT-minT)*(H-pad));
+  const defs=document.createElementNS('http://www.w3.org/2000/svg','defs');
+  defs.innerHTML=`<linearGradient id="sg" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.4"/>
+    <stop offset="100%" stop-color="var(--accent)" stop-opacity="0.02"/>
+  </linearGradient>`;
+  svg.appendChild(defs);
+  const area=document.createElementNS('http://www.w3.org/2000/svg','polygon');
+  area.setAttribute('points',`${xs[0]},${H} ${xs.map((x,i)=>x+','+ys[i]).join(' ')} ${xs[xs.length-1]},${H}`);
+  area.setAttribute('fill','url(#sg)'); svg.appendChild(area);
+  const poly=document.createElementNS('http://www.w3.org/2000/svg','polyline');
+  poly.setAttribute('points',xs.map((x,i)=>x+','+ys[i]).join(' '));
+  poly.setAttribute('fill','none'); poly.setAttribute('stroke','var(--accent)');
+  poly.setAttribute('stroke-width','2.5'); poly.setAttribute('stroke-linejoin','round');
+  svg.appendChild(poly);
+  xs.forEach((x,i)=>{
+    const c=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    c.setAttribute('cx',x);c.setAttribute('cy',ys[i]);c.setAttribute('r','4');c.setAttribute('fill','var(--accent)');
+    svg.appendChild(c);
+    const lbl=document.createElementNS('http://www.w3.org/2000/svg','text');
+    lbl.setAttribute('x',x);lbl.setAttribute('y',ys[i]-8);lbl.setAttribute('text-anchor','middle');
+    lbl.setAttribute('font-size','9');lbl.setAttribute('fill','var(--muted)');lbl.setAttribute('font-family','Inter');
+    lbl.textContent=temps[i]+'°'; svg.appendChild(lbl);
+  });
+})();
 
-const grid = document.getElementById('weekGrid');
-
-days.forEach((d, i) => {
-  const isToday = i === 0;
-  const card = document.createElement('div');
-  card.className = 'day-card' + (isToday ? ' today' : '');
-  card.innerHTML = `
-    ${isToday ? '<div class="today-badge">Сьогодні</div>' : ''}
-    <div class="day-name">${d.name}</div>
-    <div class="day-icon">${d.icon}</div>
+// === WEEK ===
+const days=[
+  {name:'Нд',high:22,rain:20,icon:'🌦'},
+  {name:'Пн',high:22,rain:45,icon:'🌧'},
+  {name:'Вт',high:26,rain:25,icon:'⛅'},
+  {name:'Ср',high:25,rain:40,icon:'🌦'},
+  {name:'Чт',high:26,rain:35,icon:'⛅'},
+];
+const grid=document.getElementById('weekGrid');
+days.forEach((d,i)=>{
+  const card=document.createElement('div');
+  card.className='day-card'+(i===0?' today':'');
+  card.innerHTML=`${i===0?'<div class="today-badge">Сьогодні</div>':''}
+    <div class="day-name">${d.name}</div><div class="day-icon">${d.icon}</div>
     <div class="day-temp">${d.high}<span>°</span></div>
     <div class="rain-bar-wrap"><div class="rain-bar" data-pct="${d.rain}"></div></div>
-    <div class="rain-pct">💧 ${d.rain}%</div>
-  `;
+    <div class="rain-pct">💧 ${d.rain}%</div>`;
   grid.appendChild(card);
 });
+setTimeout(()=>document.querySelectorAll('.rain-bar').forEach(b=>b.style.width=b.dataset.pct+'%'),200);
 
-// Animate bars after render
-setTimeout(() => {
-  document.querySelectorAll('.rain-bar').forEach(bar => {
-    bar.style.width = bar.dataset.pct + '%';
-  });
-}, 100);
+// === FACTS ===
+const facts=[
+  'Київський метрополітен має одну з найглибших станцій у світі — «Арсенальна» знаходиться на глибині 105,5 метра під землею.',
+  'Київ — одне з найстаріших міст Європи. Перша письмова згадка датується 482 роком нашої ери.',
+  'Хрещатик бере назву від слова «хрест» — на цьому місці колись перетиналися давні шляхи.',
+  'У Києві росте понад 300 000 дерев у міських парках. Місто входить до топ-10 найзеленіших столиць Європи.',
+  'Золоті ворота були збудовані за Ярослава Мудрого у 1037 році як головний вхід до стародавнього міста.',
+  'Київ стоїть на правому березі Дніпра — третьої за довжиною річки в Європі після Волги та Дунаю.',
+  'Назва «Київ» походить від імені Кий — легендарного засновника разом із братами Щеком, Хоривом та сестрою Либіддю.',
+];
+let fi=new Date().getDate()%facts.length;
+function showFact(){document.getElementById('factText').textContent=facts[fi];}
+function nextFact(){fi=(fi+1)%facts.length;showFact();}
+function prevFact(){fi=(fi-1+facts.length)%facts.length;showFact();}
+showFact();
 
-// Updated time
-const now = new Date();
-document.getElementById('updatedTime').textContent =
-  'оновлено ' + now.toLocaleTimeString('uk-UA', {hour:'2-digit', minute:'2-digit'});
-
-// Rain canvas animation
-const canvas = document.getElementById('rain');
-const ctx = canvas.getContext('2d');
-let drops = [];
-
-function resize() {
-  canvas.width  = window.innerWidth;
-  canvas.height = window.innerHeight;
+// === STARS ===
+const starsLayer=document.getElementById('starsLayer');
+for(let i=0;i<160;i++){
+  const s=document.createElement('div');
+  const sz=Math.random()*2.5+0.5;
+  s.style.cssText=`position:absolute;left:${Math.random()*100}vw;top:${Math.random()*70}vh;
+    width:${sz}px;height:${sz}px;border-radius:50%;
+    background:rgba(255,255,255,${0.4+Math.random()*0.6});
+    animation:starTwinkle ${2+Math.random()*4}s ${Math.random()*4}s ease-in-out infinite alternate;`;
+  starsLayer.appendChild(s);
 }
-resize();
-window.addEventListener('resize', resize);
+const st=document.createElement('style');
+st.textContent='@keyframes starTwinkle{from{opacity:.2;transform:scale(1)}to{opacity:1;transform:scale(1.6)}}';
+document.head.appendChild(st);
 
-for (let i = 0; i < 120; i++) {
-  drops.push({
-    x: Math.random() * window.innerWidth,
-    y: Math.random() * window.innerHeight,
-    len: 10 + Math.random() * 20,
-    speed: 4 + Math.random() * 6,
-    alpha: 0.1 + Math.random() * 0.4,
-  });
+// === SKY CANVAS (rain / pollen) ===
+const canvas=document.getElementById('skyCanvas');
+const ctx=canvas.getContext('2d');
+let pts=[];
+function resize(){canvas.width=innerWidth;canvas.height=innerHeight;}
+resize();window.addEventListener('resize',resize);
+function initPts(){
+  pts=[];
+  const th=getTheme(new Date().getHours());
+  const count=th==='day'?50:140;
+  for(let i=0;i<count;i++){
+    if(th==='day'){
+      pts.push({x:Math.random()*innerWidth,y:Math.random()*innerHeight,r:1+Math.random()*2,
+        vx:(Math.random()-.5)*.4,vy:-.2-Math.random()*.5,a:.1+Math.random()*.3,type:'pollen'});
+    }else{
+      pts.push({x:Math.random()*innerWidth,y:Math.random()*innerHeight,
+        len:10+Math.random()*20,speed:5+Math.random()*7,a:.06+Math.random()*.2,type:'rain'});
+    }
+  }
 }
-
-function drawRain() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  drops.forEach(d => {
-    ctx.beginPath();
-    ctx.moveTo(d.x, d.y);
-    ctx.lineTo(d.x - 1, d.y + d.len);
-    ctx.strokeStyle = `rgba(147,197,253,${d.alpha})`;
-    ctx.lineWidth = 0.8;
-    ctx.stroke();
-    d.y += d.speed;
-    if (d.y > canvas.height + d.len) {
-      d.y = -d.len;
-      d.x = Math.random() * canvas.width;
+initPts();
+function drawPts(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const th=getTheme(new Date().getHours());
+  pts.forEach(p=>{
+    if(p.type==='rain'){
+      ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(p.x-1,p.y+p.len);
+      ctx.strokeStyle=th==='evening'?`rgba(251,146,60,${p.a})`:`rgba(147,197,253,${p.a})`;
+      ctx.lineWidth=.8;ctx.stroke();
+      p.y+=p.speed;if(p.y>canvas.height+p.len){p.y=-p.len;p.x=Math.random()*canvas.width;}
+    }else{
+      ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fillStyle=`rgba(251,191,36,${p.a})`;ctx.fill();
+      p.x+=p.vx;p.y+=p.vy;if(p.y<-10){p.y=canvas.height+10;p.x=Math.random()*canvas.width;}
     }
   });
-  requestAnimationFrame(drawRain);
+  requestAnimationFrame(drawPts);
 }
-drawRain();
+drawPts();
+setInterval(initPts,60000);
 </script>
 </body>
 </html>
