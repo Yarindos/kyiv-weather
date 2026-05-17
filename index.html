@@ -4,115 +4,115 @@
 let weatherData = null;
 let selectedDayIndex = 0; // 0 - сьогодні, 1 - завтра і т.д.
 
-const themes={
-  night:   {label:'Ніч',      emoji:'🌙',cls:'night'},
-  dawn:    {label:'Світанок',emoji:'🌅',cls:'dawn'},
-  day:     {label:'День',    emoji:'☀️',cls:'day'},
-  evening:{label:'Вечір',   emoji:'🌇',cls:'evening'},
+const themes = {
+  night:   {label:'Ніч',      emoji:'🌙', cls:'night'},
+  dawn:    {label:'Світанок', emoji:'🌅', cls:'dawn'},
+  day:     {label:'День',     emoji:'☀️', cls:'day'},
+  evening: {label:'Вечір',    emoji:'🌇', cls:'evening'},
 };
 
-function getThemeName(h){return h>=22||h<5?'night':h<8?'dawn':h<17?'day':'evening';}
+function getThemeName(h) {
+  return h >= 22 || h < 5 ? 'night' : h < 8 ? 'dawn' : h < 17 ? 'day' : 'evening';
+}
 
-function applyTheme(n){
-  const t=themes[n];
-  document.body.className=t.cls;
-  document.getElementById('tlabel').textContent=t.label;
-  document.getElementById('periodEmoji').textContent=t.emoji;
-  document.getElementById('periodName').textContent=t.label;
+function applyTheme(n) {
+  const t = themes[n];
+  document.body.className = t.cls;
+  document.getElementById('tlabel').textContent = t.label;
+  document.getElementById('periodEmoji').textContent = t.emoji;
+  document.getElementById('periodName').textContent = t.label;
 }
 
 // ═══════════════════════════════════════════════
 // CLOCK
 // ═══════════════════════════════════════════════
-const ukDays=['Неділя','Понеділок','Вівторок','Середа','Четвер','П’ятниця','Субота'];
-const ukMons=['січня','лютого','березня','квітня','травня','червня','липня','серпня','вересня','жовтня','листопада','грудня'];
+const ukDays = ['Неділя','Понеділок','Вівторок','Середа','Четвер','П’ятниця','Субота'];
+const ukMons = ['січня','лютого','березня','квітня','травня','червня','липня','серпня','вересня','жовтня','листопада','грудня'];
 
-function tick(){
-  const n=new Date(),h=n.getHours(),m=n.getMinutes(),s=n.getSeconds();
-  document.getElementById('liveClock').textContent=`${p(h)}:${p(m)}:${p(s)}`;
-  document.getElementById('liveDate').textContent=`${ukDays[n.getDay()]}, ${n.getDate()} ${ukMons[n.getMonth()]}`;
-  document.getElementById('footerTime').textContent=`оновлено ${p(h)}:${p(m)}`;
-  applyTheme(getThemeName(h));
-  if(window._sunrise) updateSun(h,m);
+function tick() {
+  const n = new Date(), h = n.getHours(), m = n.getMinutes(), s = n.getSeconds();
+  document.getElementById('liveClock').textContent = `${p(h)}:${p(m)}:${p(s)}`;
+  document.getElementById('liveDate').textContent = `${ukDays[n.getDay()]}, ${n.getDate()} ${ukMons[n.getMonth()]}`;
+  document.getElementById('footerTime').textContent = `оновлено ${p(h)}:${p(m)}`;
+  
+  // Змінюємо тему по годинах тільки якщо обрано "Сьогодні"
+  if (selectedDayIndex === 0) {
+    applyTheme(getThemeName(h));
+  }
+  if (window._sunrise) updateSun(h, m);
 }
-function p(v){return String(v).padStart(2,'0');}
-setInterval(tick,1000); tick();
+function p(v) { return String(v).padStart(2, '0'); }
+setInterval(tick, 1000); 
+tick();
 
 // ═══════════════════════════════════════════════
 // WMO CODE → EMOJI + TEXT
 // ═══════════════════════════════════════════════
-function wmoIcon(c){
-  if(c===0)return{i:'☀️',t:'Ясно'};
-  if(c<=2)return{i:'🌤',t:'Переважно ясно'};
-  if(c===3)return{i:'☁️',t:'Похмуро'};
-  if(c<=48)return{i:'🌫',t:'Туман'};
-  if(c<=55)return{i:'🌦',t:'Мряка'};
-  if(c<=65)return{i:'🌧',t:'Дощ'};
-  if(c<=75)return{i:'❄️',t:'Сніг'};
-  if(c<=82)return{i:'🌧',t:'Зливи'};
-  if(c<=99)return{i:'⛈',t:'Гроза'};
-  return{i:'🌡',t:'Невідомо'};
+function wmoIcon(c) {
+  if(c === 0) return {i:'☀️', t:'Ясно'};
+  if(c <= 2) return {i:'🌤', t:'Переважно ясно'};
+  if(c === 3) return {i:'☁️', t:'Похмуро'};
+  if(c <= 48) return {i:'🌫', t:'Туман'};
+  if(c <= 55) return {i:'🌦', t:'Мряка'};
+  if(c <= 65) return {i:'🌧', t:'Дощ'};
+  if(c <= 75) return {i:'❄️', t:'Сніг'};
+  if(c <= 82) return {i:'🌧', t:'Зливи'};
+  if(c <= 99) return {i:'⛈', t:'Гроза'};
+  return {i:'🌡', t:'Невідомо'};
 }
-function isAlert(c){return c>=80;}
+function isAlert(c) { return c >= 80; }
 
-function windDirText(deg){
-  const dirs=['Пн','ПнСх','Сх','ПдСх','Пд','ПдЗх','Зх','ПнЗх'];
-  return dirs[Math.round(deg/45)%8];
+function windDirText(deg) {
+  const dirs = ['Пн','ПнСх','Сх','ПдСх','Пд','ПдЗх','Зх','ПнЗх'];
+  return dirs[Math.round(deg / 45) % 8];
 }
 
-function updateSun(h,m){
-  if(!window._sunrise) return;
-  const {rise,set}=window._sunrise;
-  const total=set-rise, now=h*60+m;
-  const t=Math.max(0,Math.min(1,(now-rise)/total));
-  const P0={x:60,y:80},P1={x:400,y:-20},P2={x:740,y:80};
-  const x=(1-t)*(1-t)*P0.x+2*t*(1-t)*P1.x+t*t*P2.x;
-  const y=(1-t)*(1-t)*P0.y+2*t*(1-t)*P1.y+t*t*P2.y;
-  ['sunMarker','sunGlow'].forEach(id=>{
-    const el=document.getElementById(id);
-    if(el){el.setAttribute('cx',x);el.setAttribute('cy',y);}
+function updateSun(h, m) {
+  if (!window._sunrise) return;
+  const {rise, set} = window._sunrise;
+  const total = set - rise, now = h * 60 + m;
+  const t = Math.max(0, Math.min(1, (now - rise) / total));
+  const P0 = {x:60, y:80}, P1 = {x:400, y:-20}, P2 = {x:740, y:80};
+  const x = (1 - t) * (1 - t) * P0.x + 2 * t * (1 - t) * P1.x + t * t * P2.x;
+  const y = (1 - t) * (1 - t) * P0.y + 2 * t * (1 - t) * P1.y + t * t * P2.y;
+  ['sunMarker', 'sunGlow'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.setAttribute('cx', x); el.setAttribute('cy', y); }
   });
 }
 
 // ═══════════════════════════════════════════════
 // OPEN-METEO API
 // ═══════════════════════════════════════════════
-async function fetchWeather(){
-  const url='https://api.open-meteo.com/v1/forecast?latitude=50.45&longitude=30.52'
-    +'&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,'
-    +'weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m'
-    +'&hourly=temperature_2m,precipitation_probability,weather_code,wind_speed_10m,relative_humidity_2m,apparent_temperature,wind_direction_10m,wind_gusts_10m'
-    +'&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset'
-    +'&timezone=Europe%2FKiev&forecast_days=7&wind_speed_unit=kmh';
+async function fetchWeather() {
+  const url = 'https://api.open-meteo.com/v1/forecast?latitude=50.45&longitude=30.52'
+    + '&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,'
+    + 'weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m'
+    + '&hourly=temperature_2m,precipitation_probability,weather_code,wind_speed_10m,relative_humidity_2m,apparent_temperature,wind_direction_10m,wind_gusts_10m'
+    + '&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset'
+    + '&timezone=Europe%2FKiev&forecast_days=7&wind_speed_unit=kmh';
   try {
-    const r=await fetch(url);
-    weatherData=await r.json();
-    // При першому завантаженні або оновленні рендеримо вибраний день
+    const r = await fetch(url);
+    weatherData = await r.json();
     renderDisplay();
-  } catch(e){
-    document.getElementById('cdesc').textContent='⚠️ Не вдалось завантажити дані';
+  } catch(e) {
+    document.getElementById('cdesc').textContent = '⚠️ Не вдалось завантажити дані';
   }
 }
 
-// Головна функція перемикання екрана відповідно до обраного дня
 function renderDisplay() {
   if (!weatherData) return;
   
   const daily = weatherData.daily;
-  
-  // Спочатку оновлюємо сітку днів, щоб підсвітити обраний
   renderWeek(daily);
 
   if (selectedDayIndex === 0) {
-    // Якщо обрано СЬОГОДНІ — беремо поточні живі дані анімованих блоків
     renderCurrentSection(weatherData.current, true);
   } else {
-    // Якщо інший день — беремо середні значення на цей день із погодинного або денного прогнозу
-    // Для відтворення повноти інтерфейсу витягуємо дані на 12:00 обраного дня
-    const hourlyIdx = selectedDayIndex * 24 + 12; 
+    const hourlyIdx = selectedDayIndex * 24 + 12; // Дані на полудень обраного дня
     const mockCurrent = {
       weather_code: daily.weather_code[selectedDayIndex],
-      temperature_2m: daily.temperature_2m_max[selectedDayIndex], // показуємо макс. температуру дня
+      temperature_2m: daily.temperature_2m_max[selectedDayIndex],
       apparent_temperature: weatherData.hourly.apparent_temperature[hourlyIdx],
       relative_humidity_2m: weatherData.hourly.relative_humidity_2m[hourlyIdx],
       wind_speed_10m: weatherData.hourly.wind_speed_10m[hourlyIdx],
@@ -122,20 +122,16 @@ function renderDisplay() {
     renderCurrentSection(mockCurrent, false);
   }
 
-  // Схід / захід сонця для обраного дня
-  const sr=new Date(daily.sunrise[selectedDayIndex]), ss=new Date(daily.sunset[selectedDayIndex]);
-  const riseMin=sr.getHours()*60+sr.getMinutes(), setMin=ss.getHours()*60+ss.getMinutes();
-  window._sunrise={rise:riseMin,set:setMin};
-  document.getElementById('sunTimes').textContent=
-    `${p(sr.getHours())}:${p(sr.getMinutes())} — ${p(ss.getHours())}:${p(ss.getMinutes())}`;
+  const sr = new Date(daily.sunrise[selectedDayIndex]), ss = new Date(daily.sunset[selectedDayIndex]);
+  const riseMin = sr.getHours() * 60 + sr.getMinutes(), setMin = ss.getHours() * 60 + ss.getMinutes();
+  window._sunrise = {rise: riseMin, set: setMin};
+  document.getElementById('sunTimes').textContent = `${p(sr.getHours())}:${p(sr.getMinutes())} — ${p(ss.getHours())}:${p(ss.getMinutes())}`;
   
-  const now=new Date();
+  const now = new Date();
   updateSun(selectedDayIndex === 0 ? now.getHours() : 12, selectedDayIndex === 0 ? now.getMinutes() : 0);
 
-  // Графік та години саме для обраного дня
   renderHourly(weatherData.hourly, selectedDayIndex);
   
-  // Перевірка небезпечних явищ (робимо лише для сьогодні)
   if (selectedDayIndex === 0) {
     checkAlert(weatherData.current.weather_code, weatherData.current.temperature_2m);
   } else {
@@ -144,121 +140,121 @@ function renderDisplay() {
 }
 
 function renderCurrentSection(c, isLive) {
-  const w=wmoIcon(c.weather_code);
+  const w = wmoIcon(c.weather_code);
   const labelEl = document.getElementById('currentCard').querySelector('.clabel');
   
   if (isLive) {
     labelEl.innerHTML = `Зараз · <span id="periodEmoji">⏳</span> <span id="periodName">завантаження...</span>`;
-    const h=new Date().getHours();
-    applyTheme(getThemeName(h));
+    applyTheme(getThemeName(new Date().getHours()));
   } else {
     const dateObj = new Date(weatherData.daily.time[selectedDayIndex]);
     labelEl.innerHTML = `Прогноз на · 📅 <span>${ukDays[dateObj.getDay()]}</span>`;
   }
 
-  document.getElementById('tempVal').textContent=Math.round(c.temperature_2m);
-  document.getElementById('mainIcon').textContent=w.i;
-  document.getElementById('cdesc').textContent=w.i+' '+w.t;
-  document.getElementById('cfeels').textContent=`Відчувається як ${Math.round(c.apparent_temperature)}°C · Вологість ${c.relative_humidity_2m}%`;
-  document.getElementById('cwind').textContent=`💨 Вітер ${Math.round(c.wind_speed_10m)} км/год · ${windDirText(c.wind_direction_10m)}`;
+  document.getElementById('tempVal').textContent = Math.round(c.temperature_2m);
+  document.getElementById('mainIcon').textContent = w.i;
+  document.getElementById('cdesc').textContent = w.i + ' ' + w.t;
+  document.getElementById('cfeels').textContent = `Відчувається як ${Math.round(c.apparent_temperature)}°C · Вологість ${c.relative_humidity_2m}%`;
+  document.getElementById('cwind').textContent = `💨 Вітер ${Math.round(c.wind_speed_10m)} км/год · ${windDirText(c.wind_direction_10m)}`;
 
-  // Wind card
-  document.getElementById('windSpeed').textContent=Math.round(c.wind_speed_10m);
-  document.getElementById('windDir').textContent=windDirText(c.wind_direction_10m)+' '+c.wind_direction_10m+'°';
-  document.getElementById('windGusts').textContent=Math.round(c.wind_gusts_10m);
+  document.getElementById('windSpeed').textContent = Math.round(c.wind_speed_10m);
+  document.getElementById('windDir').textContent = windDirText(c.wind_direction_10m) + ' ' + c.wind_direction_10m + '°';
+  document.getElementById('windGusts').textContent = Math.round(c.wind_gusts_10m);
   
-  // Переініціалізація карти вітру (вбиваємо старий інтервал у drawFrame не обов'язково, canvas просто підхопить нові змінні)
   initWindMap(c.wind_direction_10m, c.wind_speed_10m);
 }
 
 // ═══════════════════════════════════════════════
-// HOURLY (Оновлено для підтримки індексу дня)
+// HOURLY
 // ═══════════════════════════════════════════════
-function renderHourly(h, dayIdx){
-  const nowH=new Date().getHours();
+function renderHourly(h, dayIdx) {
+  const nowH = new Date().getHours();
   const startIdx = dayIdx * 24;
+  const idxs = [...Array(12).keys()].map(i => startIdx + (i * 2));
   
-  // Обираємо 12 точок (кожні 2 години) для обраного дня
-  const idxs=[...Array(12).keys()].map(i => startIdx + (i * 2));
+  const inner = document.getElementById('hinner');
+  inner.innerHTML = '';
   
-  const inner=document.getElementById('hinner');
-  inner.innerHTML='';
-  
-  idxs.forEach(i=>{
-    const hr=parseInt(h.time[i].split('T')[1]);
-    // Підсвічуємо "зараз" тільки якщо це сьогоднішній день
-    const isNow = dayIdx === 0 && Math.abs(hr-nowH)<=1;
-    const w=wmoIcon(h.weather_code[i]);
+  idxs.forEach(i => {
+    const hr = parseInt(h.time[i].split('T')[1]);
+    const isNow = dayIdx === 0 && Math.abs(hr - nowH) <= 1;
+    const w = wmoIcon(h.weather_code[i]);
     
-    const col=document.createElement('div');
-    col.className='hcol'+(isNow?' now':'');
-    col.innerHTML=`<div class="htime">${p(hr)}:00</div>
+    const col = document.createElement('div');
+    col.className = 'hcol' + (isNow ? ' now' : '');
+    col.innerHTML = `<div class="htime">${p(hr)}:00</div>
       <div class="hicon">${w.i}</div>
       <div class="htemp">${Math.round(h.temperature_2m[i])}°</div>
       <div class="hrain">💧${h.precipitation_probability[i]}%</div>`;
     inner.appendChild(col);
   });
   
-  buildSparkline(idxs.map(i=>({t:h.temperature_2m[i],h:parseInt(h.time[i].split('T')[1])})));
+  buildSparkline(idxs.map(i => ({t: h.temperature_2m[i], h: parseInt(h.time[i].split('T')[1])})));
 }
 
-function buildSparkline(pts){
-  const svg=document.getElementById('sparkSvg');
-  svg.innerHTML='';
-  const temps=pts.map(p=>p.t);
-  const minT=Math.min(...temps)-1, maxT=Math.max(...temps)+1;
-  const W=760,H=60,pad=22;
-  const xs=pts.map((_,i)=>pad+i*(W-pad*2)/(pts.length-1));
-  const ys=temps.map(t=>H-pad/2-(t-minT)/(maxT-minT)*(H-pad));
-  const ns='http://www.w3.org/2000/svg';
-  const defs=document.createElementNS(ns,'defs');
-  defs.innerHTML=`<linearGradient id="sg" x1="0" y1="0" x2="0" y2="1">
+function buildSparkline(pts) {
+  const svg = document.getElementById('sparkSvg');
+  svg.innerHTML = '';
+  const temps = pts.map(p => p.t);
+  const minT = Math.min(...temps) - 1, maxT = Math.max(...temps) + 1;
+  const W = 760, H = 60, pad = 22;
+  const xs = pts.map((_, i) => pad + i * (W - pad * 2) / (pts.length - 1));
+  const ys = temps.map(t => H - pad / 2 - (t - minT) / (maxT - minT) * (H - pad));
+  const ns = 'http://www.w3.org/2000/svg';
+  const defs = document.createElementNS(ns, 'defs');
+  defs.innerHTML = `<linearGradient id="sg" x1="0" y1="0" x2="0" y2="1">
     <stop offset="0%" stop-color="var(--accent)" stop-opacity=".4"/>
     <stop offset="100%" stop-color="var(--accent)" stop-opacity=".02"/>
   </linearGradient>`;
   svg.appendChild(defs);
-  const area=document.createElementNS(ns,'polygon');
-  area.setAttribute('points',`${xs[0]},${H} ${xs.map((x,i)=>x+','+ys[i]).join(' ')} ${xs[xs.length-1]},${H}`);
-  area.setAttribute('fill','url(#sg)'); svg.appendChild(area);
-  const poly=document.createElementNS(ns,'polyline');
-  poly.setAttribute('points',xs.map((x,i)=>x+','+ys[i]).join(' '));
-  poly.setAttribute('fill','none');poly.setAttribute('stroke','var(--accent)');
-  poly.setAttribute('stroke-width','2.5');poly.setAttribute('stroke-linejoin','round');
+  
+  const area = document.createElementNS(ns, 'polygon');
+  area.setAttribute('points', `${xs[0]},${H} ${xs.map((x, i) => x + ',' + ys[i]).join(' ')} ${xs[xs.length - 1]},${H}`);
+  area.setAttribute('fill', 'url(#sg)'); 
+  svg.appendChild(area);
+  
+  const poly = document.createElementNS(ns, 'polyline');
+  poly.setAttribute('points', xs.map((x, i) => x + ',' + ys[i]).join(' '));
+  poly.setAttribute('fill', 'none'); 
+  poly.setAttribute('stroke', 'var(--accent)');
+  poly.setAttribute('stroke-width', '2.5'); 
+  poly.setAttribute('stroke-linejoin', 'round');
   svg.appendChild(poly);
-  xs.forEach((x,i)=>{
-    const c=document.createElementNS(ns,'circle');
-    c.setAttribute('cx',x);c.setAttribute('cy',ys[i]);c.setAttribute('r','4');c.setAttribute('fill','var(--accent)');
+  
+  xs.forEach((x, i) => {
+    const c = document.createElementNS(ns, 'circle');
+    c.setAttribute('cx', x); c.setAttribute('cy', ys[i]); c.setAttribute('r', '4'); c.setAttribute('fill', 'var(--accent)');
     svg.appendChild(c);
-    const lbl=document.createElementNS(ns,'text');
-    lbl.setAttribute('x',x);lbl.setAttribute('y',ys[i]-8);lbl.setAttribute('text-anchor','middle');
-    lbl.setAttribute('font-size','9');lbl.setAttribute('fill','var(--muted)');lbl.setAttribute('font-family','Inter');
-    lbl.textContent=Math.round(temps[i])+'°'; svg.appendChild(lbl);
+    const lbl = document.createElementNS(ns, 'text');
+    lbl.setAttribute('x', x); lbl.setAttribute('y', ys[i] - 8); lbl.setAttribute('text-anchor', 'middle');
+    lbl.setAttribute('font-size', '9'); lbl.setAttribute('fill', 'var(--muted)'); lbl.setAttribute('font-family', 'Inter');
+    lbl.textContent = Math.round(temps[i]) + '°'; 
+    svg.appendChild(lbl);
   });
 }
 
 // ═══════════════════════════════════════════════
-// WEEK (Додано курсор, клік та активний клас)
+// WEEK
 // ═══════════════════════════════════════════════
-const shortDays=['Нд','Пн','Вт','Ср','Чт','Пт','Сб'];
-function renderWeek(daily){
-  const grid=document.getElementById('weekGrid');
-  grid.innerHTML='';
-  for(let i=0;i<7;i++){
-    const date=new Date(daily.time[i]);
-    const w=wmoIcon(daily.weather_code[i]);
-    const rain=daily.precipitation_probability_max[i]||0;
-    const card=document.createElement('div');
+const shortDays = ['Нд','Пн','Вт','Ср','Чт','Пт','Сб'];
+function renderWeek(daily) {
+  const grid = document.getElementById('weekGrid');
+  grid.innerHTML = '';
+  for (let i = 0; i < 7; i++) {
+    const date = new Date(daily.time[i]);
+    const w = wmoIcon(daily.weather_code[i]);
+    const rain = daily.precipitation_probability_max[i] || 0;
+    const card = document.createElement('div');
     
-    // Додаємо стиль стискання/виділення для активної картки
     let activeClass = '';
     if (i === selectedDayIndex) {
-      activeClass = ' today'; // Використовуємо ваш поточний CSS стиль підсвічування границь
+      activeClass = ' today'; 
     }
     
-    card.className='dcard' + activeClass;
-    card.style.cursor = 'pointer'; // Робимо явний вказівник
+    card.className = 'dcard' + activeClass;
+    card.style.cursor = 'pointer'; 
     
-    card.innerHTML=`${i===0?'<div class="today-badge">Сьогодні</div>':''}
+    card.innerHTML = `${i === 0 ? '<div class="today-badge">Сьогодні</div>' : ''}
       <div class="dname">${shortDays[date.getDay()]}</div>
       <div class="dicon">${w.i}</div>
       <div class="dtemp">${Math.round(daily.temperature_2m_max[i])}<span>°</span></div>
@@ -266,7 +262,6 @@ function renderWeek(daily){
       <div class="rbar-w"><div class="rbar" data-p="${rain}"></div></div>
       <div class="rpct">💧${rain}%</div>`;
     
-    // ДОДАЄМО ОБРОБНИК ПОДІЇ КЛІКУ
     card.addEventListener('click', () => {
       selectedDayIndex = i;
       renderDisplay();
@@ -274,106 +269,97 @@ function renderWeek(daily){
 
     grid.appendChild(card);
   }
-  setTimeout(()=>document.querySelectorAll('.rbar').forEach(b=>b.style.width=b.dataset.p+'%'), 200);
+  setTimeout(() => document.querySelectorAll('.rbar').forEach(b => b.style.width = b.dataset.p + '%'), 200);
 }
 
 // ═══════════════════════════════════════════════
 // WIND MAP CANVAS
 // ═══════════════════════════════════════════════
 let currentAnimationFrame = null;
-function initWindMap(dirDeg, speedKmh){
-  const canvas=document.getElementById('windCanvas');
-  const ctx=canvas.getContext('2d');
-  const dpr=window.devicePixelRatio||1;
-  const W=canvas.offsetWidth, H=240;
-  canvas.width=W*dpr; canvas.height=H*dpr;
-  canvas.style.height=H+'px';
-  ctx.scale(dpr,dpr);
+function initWindMap(dirDeg, speedKmh) {
+  const canvas = document.getElementById('windCanvas');
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const W = canvas.offsetWidth, H = 240;
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  canvas.style.height = H + 'px';
+  ctx.scale(dpr, dpr);
 
-  const kyivShape=[
+  const kyivShape = [
     [.35,.15],[.5,.08],[.65,.15],[.78,.25],[.82,.42],[.75,.6],
     [.65,.75],[.5,.85],[.35,.75],[.22,.6],[.18,.42],[.25,.25]
   ];
 
-  const angle=(dirDeg-180)*Math.PI/180;
-  const vx=Math.cos(angle)*(speedKmh/20);
-  const vy=Math.sin(angle)*(speedKmh/20);
+  const angle = (dirDeg - 180) * Math.PI / 180;
+  const vx = Math.cos(angle) * (speedKmh / 20);
+  const vy = Math.sin(angle) * (speedKmh / 20);
 
-  let particles=[];
-  for(let i=0;i<80;i++){
-    particles.push({x:Math.random()*W, y:Math.random()*H,
-      life:Math.random(), speed:.5+Math.random()*1.5});
+  let particles = [];
+  for (let i = 0; i < 80; i++) {
+    particles.push({x: Math.random() * W, y: Math.random() * H, life: Math.random(), speed: .5 + Math.random() * 1.5});
   }
 
-  // Скасовуємо попередню анімацію перед запуском нової, щоб вони не накладалися
-  if(currentAnimationFrame) cancelAnimationFrame(currentAnimationFrame);
+  if (currentAnimationFrame) cancelAnimationFrame(currentAnimationFrame);
 
-  function drawFrame(){
-    ctx.clearRect(0,0,W,H);
+  function drawFrame() {
+    ctx.clearRect(0, 0, W, H);
 
-    ctx.strokeStyle='rgba(255,255,255,.05)';
-    ctx.lineWidth=1;
-    for(let x=0;x<W;x+=40){ ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke(); }
-    for(let y=0;y<H;y+=40){ ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke(); }
+    ctx.strokeStyle = 'rgba(255,255,255,.05)';
+    ctx.lineWidth = 1;
+    for (let x = 0; x < W; x += 40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
+    for (let y = 0; y < H; y += 40) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
 
     ctx.beginPath();
-    kyivShape.forEach(([nx,ny],i)=>{
-      const mx=nx*W, my=ny*H;
-      i===0?ctx.moveTo(mx,my):ctx.lineTo(mx,my);
+    kyivShape.forEach(([nx, ny], i) => {
+      const mx = nx * W, my = ny * H;
+      i === 0 ? ctx.moveTo(mx, my) : ctx.lineTo(mx, my);
     });
     ctx.closePath();
-    ctx.fillStyle='rgba(255,255,255,.04)';
+    ctx.fillStyle = 'rgba(255,255,255,.04)';
     ctx.fill();
-    ctx.strokeStyle='rgba(255,255,255,.12)';
-    ctx.lineWidth=1.5;
+    ctx.strokeStyle = 'rgba(255,255,255,.12)';
+    ctx.lineWidth = 1.5;
     ctx.stroke();
 
     ctx.beginPath();
-    ctx.moveTo(W*.55,0); ctx.bezierCurveTo(W*.58,H*.3,W*.52,H*.6,W*.55,H);
-    ctx.strokeStyle='rgba(56,189,248,.2)';
-    ctx.lineWidth=8; ctx.stroke();
-    ctx.strokeStyle='rgba(56,189,248,.08)';
-    ctx.lineWidth=14; ctx.stroke();
+    ctx.moveTo(W * .55, 0); ctx.bezierCurveTo(W * .58, H * .3, W * .52, H * .6, W * .55, H);
+    ctx.strokeStyle = 'rgba(56,189,248,.2)';
+    ctx.lineWidth = 8; ctx.stroke();
+    ctx.strokeStyle = 'rgba(56,189,248,.08)';
+    ctx.lineWidth = 14; ctx.stroke();
 
-    particles.forEach(p=>{
-      p.x+=vx*p.speed; p.y+=vy*p.speed; p.life+=.008*p.speed;
-      if(p.life>1||p.x<0||p.x>W||p.y<0||p.y>H){
-        p.x=Math.random()*W; p.y=Math.random()*H; p.life=0;
+    particles.forEach(p => {
+      p.x += vx * p.speed; p.y += vy * p.speed; p.life += .008 * p.speed;
+      if (p.life > 1 || p.x < 0 || p.x > W || p.y < 0 || p.y > H) {
+        p.x = Math.random() * W; p.y = Math.random() * H; p.life = 0;
       }
-      const alpha=Math.sin(p.life*Math.PI)*.7;
-      const tail=speedKmh*0.4;
-      const grd=ctx.createLinearGradient(p.x-vx*tail,p.y-vy*tail,p.x,p.y);
-      grd.addColorStop(0,'rgba(251,191,36,0)');
-      grd.addColorStop(1,`rgba(251,191,36,${alpha})`);
-      ctx.beginPath();
-      ctx.moveTo(p.x-vx*tail,p.y-vy*tail);
-      ctx.lineTo(p.x,p.y);
-      ctx.strokeStyle=grd;
-      ctx.lineWidth=1.5; ctx.stroke();
-      ctx.beginPath();
-      ctx.arc(p.x,p.y,2,0,Math.PI*2);
-      ctx.fillStyle=`rgba(251,191,36,${alpha*.8})`; ctx.fill();
+      const alpha = Math.sin(p.life * Math.PI) * .7;
+      const tail = speedKmh * 0.4;
+      const grd = ctx.createLinearGradient(p.x - vx * tail, p.y - vy * tail, p.x, p.y);
+      grd.addColorStop(0, 'rgba(251,191,36,0)');
+      grd.addColorStop(1, `rgba(251,191,36,${alpha})`);
+      ctx.beginPath(); ctx.moveTo(p.x - vx * tail, p.y - vy * tail); ctx.lineTo(p.x, p.y);
+      ctx.strokeStyle = grd; ctx.lineWidth = 1.5; ctx.stroke();
+      ctx.beginPath(); ctx.arc(p.x, p.y, 2, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(251,191,36,${alpha * .8})`; ctx.fill();
     });
 
-    const cr={x:W-36,y:36,r:22};
-    ctx.beginPath(); ctx.arc(cr.x,cr.y,cr.r,0,Math.PI*2);
-    ctx.fillStyle='rgba(0,0,0,.4)'; ctx.fill();
-    ctx.strokeStyle='rgba(255,255,255,.15)'; ctx.lineWidth=1; ctx.stroke();
-    const dirs=[{l:'Пн',a:-90},{l:'Пд',a:90},{l:'Сх',a:0},{l:'Зх',a:180}];
-    dirs.forEach(d=>{
-      const rad=d.a*Math.PI/180;
-      ctx.fillStyle='rgba(255,255,255,.5)'; ctx.font='7px Inter';
-      ctx.textAlign='center'; ctx.textBaseline='middle';
-      ctx.fillText(d.l,cr.x+Math.cos(rad)*(cr.r-8),cr.y+Math.sin(rad)*(cr.r-8));
+    const cr = {x: W - 36, y: 36, r: 22};
+    ctx.beginPath(); ctx.arc(cr.x, cr.y, cr.r, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(0,0,0,.4)'; ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,.15)'; ctx.lineWidth = 1; ctx.stroke();
+    const dirs = [{l:'Пн', a:-90},{l:'Пд', a:90},{l:'Сх', a:0},{l:'Зх', a:180}];
+    dirs.forEach(d => {
+      const rad = d.a * Math.PI / 180;
+      ctx.fillStyle = 'rgba(255,255,255,.5)'; ctx.font = '7px Inter';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(d.l, cr.x + Math.cos(rad) * (cr.r - 8), cr.y + Math.sin(rad) * (cr.r - 8));
     });
-    const wrad=(dirDeg-90)*Math.PI/180;
-    ctx.beginPath();
-    ctx.moveTo(cr.x,cr.y);
-    ctx.lineTo(cr.x+Math.cos(wrad)*cr.r*.7,cr.y+Math.sin(wrad)*cr.r*.7);
-    ctx.strokeStyle='#fbbf24'; ctx.lineWidth=2; ctx.stroke();
-    ctx.beginPath();
-    ctx.arc(cr.x,cr.y,3,0,Math.PI*2);
-    ctx.fillStyle='#fbbf24'; ctx.fill();
+    const wrad = (dirDeg - 90) * Math.PI / 180;
+    ctx.beginPath(); ctx.moveTo(cr.x, cr.y); ctx.lineTo(cr.x + Math.cos(wrad) * cr.r * .7, cr.y + Math.sin(wrad) * cr.r * .7);
+    ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.beginPath(); ctx.arc(cr.x, cr.y, 3, 0, Math.PI * 2);
+    ctx.fillStyle = '#fbbf24'; ctx.fill();
 
     currentAnimationFrame = requestAnimationFrame(drawFrame);
   }
@@ -383,54 +369,53 @@ function initWindMap(dirDeg, speedKmh){
 // ═══════════════════════════════════════════════
 // NOTIFICATIONS
 // ═══════════════════════════════════════════════
-let notifGranted=false;
+let notifGranted = false;
 
-function checkAlert(code, temp){
-  const shouldAlert=isAlert(code)||(temp>35)||(temp<-10);
-  if(!shouldAlert){
-    document.getElementById('notifText').textContent='🔔 Отримуй push-сповіщення про дощ та грозу над Києвом';
+function checkAlert(code, temp) {
+  const shouldAlert = isAlert(code) || (temp > 35) || (temp < -10);
+  if (!shouldAlert) {
+    document.getElementById('notifText').textContent = '🔔 Отримуй push-сповіщення про дощ та грозу над Києвом';
     return;
   }
-  const w=wmoIcon(code);
-  document.getElementById('notifText').innerHTML=
-    `⚠️ <strong>Увага!</strong> Очікується/зараз над Києвом: ${w.i} ${w.t}`;
-  if(notifGranted && selectedDayIndex === 0) sendNotif(w);
+  const w = wmoIcon(code);
+  document.getElementById('notifText').innerHTML = `⚠️ <strong>Увага!</strong> Очікується/зараз над Києвом: ${w.i} ${w.t}`;
+  if (notifGranted && selectedDayIndex === 0) sendNotif(w);
 }
 
-async function requestNotif(){
-  const btn=document.getElementById('notifBtn');
-  if(!('Notification' in window)){
-    document.getElementById('notifText').textContent='❌ Ваш браузер не підтримує сповіщення';
-    btn.disabled=true; return;
+async function requestNotif() {
+  const btn = document.getElementById('notifBtn');
+  if (!('Notification' in window)) {
+    document.getElementById('notifText').textContent = '❌ Ваш browser не підтримує сповіщення';
+    btn.disabled = true; return;
   }
-  if(Notification.permission==='granted'){
-    notifGranted=true; btn.textContent='Увімкнено ✓'; btn.disabled=true;
-    document.getElementById('notifText').textContent='✅ Сповіщення увімкнено! Ми повідомимо про погіршення погоди.';
+  if (Notification.permission === 'granted') {
+    notifGranted = true; btn.textContent = 'Увімкнено ✓'; btn.disabled = true;
+    document.getElementById('notifText').textContent = '✅ Сповіщення увімкнено! Ми повідомимо про погіршення погоди.';
     return;
   }
-  const perm=await Notification.requestPermission();
-  if(perm==='granted'){
-    notifGranted=true; btn.textContent='Увімкнено ✓'; btn.disabled=true;
-    document.getElementById('notifText').textContent='✅ Сповіщення увімкнено! Ми повідомимо про погіршення погоди.';
-    new Notification('Погода · Київ',{body:'🌧 Готово! Ми повідомимо тебе про дощ чи грозу.',icon:'https://cdn.jsdelivr.net/npm/twemoji@14/2/72x72/1f327.png'});
+  const perm = await Notification.requestPermission();
+  if (perm === 'granted') {
+    notifGranted = true; btn.textContent = 'Увімкнено ✓'; btn.disabled = true;
+    document.getElementById('notifText').textContent = '✅ Сповіщення увімкнено! Ми повідомимо про погіршення погоди.';
+    new Notification('Погода · Київ', {body: '🌧 Готово! Ми повідомимо тебе про дощ чи грозу.', icon: 'https://cdn.jsdelivr.net/npm/twemoji@14/2/72x72/1f327.png'});
   } else {
-    btn.textContent='Відмовлено'; btn.disabled=true;
-    document.getElementById('notifText').textContent='❌ Дозвіл відхилено. Увімкни сповіщення в налаштуваннях браузера.';
+    btn.textContent = 'Відмовлено'; btn.disabled = true;
+    document.getElementById('notifText').textContent = '❌ Дозвіл відхилено. Увімкни сповіщення в налаштуваннях браузера.';
   }
 }
 
-function sendNotif(w){
-  if(Notification.permission!=='granted') return;
-  new Notification('Погода · Київ',{
-    body:`${w.i} ${w.t} над Києвом. Будь готовий!`,
-    icon:'https://cdn.jsdelivr.net/npm/twemoji@14/2/72x72/1f327.png'
+function sendNotif(w) {
+  if (Notification.permission !== 'granted') return;
+  new Notification('Погода · Київ', {
+    body: `${w.i} ${w.t} над Києвом. Будь готовий!`,
+    icon: 'https://cdn.jsdelivr.net/npm/twemoji@14/2/72x72/1f327.png'
   });
 }
 
 // ═══════════════════════════════════════════════
 // FACTS
 // ═══════════════════════════════════════════════
-const facts=[
+const facts = [
   'Київський метрополітен має одну з найглибших станцій у світі — «Арсенальна» знаходиться на глибині 105,5 метра під землею.',
   'Київ — одне з найстаріших міст Європи. Перша письмова згадка датується 482 роком нашої ери.',
   'Хрещатик бере назву від слова «хрест» — на цьому місці колись перетиналися давні шляхи.',
@@ -439,70 +424,68 @@ const facts=[
   'Київ стоїть на правому березі Дніпра — третьої за довжиною річки в Європі після Волги та Дунаю.',
   'Назва «Київ» походить від імені Кий — легендарного засновника разом із братами Щеком, Хоривом та сестрою Либіддю.',
 ];
-let fi=new Date().getDate()%facts.length;
-function showFact(){document.getElementById('factText').textContent=facts[fi];}
-function nextFact(){fi=(fi+1)%facts.length;showFact();}
-function prevFact(){fi=(fi-1+facts.length)%facts.length;showFact();}
+let fi = new Date().getDate() % facts.length;
+function showFact() { document.getElementById('factText').textContent = facts[fi]; }
+function nextFact() { fi = (fi + 1) % facts.length; showFact(); }
+function prevFact() { fi = (fi - 1 + facts.length) % facts.length; showFact(); }
 showFact();
 
 // ═══════════════════════════════════════════════
 // STARS
 // ═══════════════════════════════════════════════
-const stL=document.getElementById('starsLayer');
-for(let i=0;i<160;i++){
-  const s=document.createElement('div'),sz=Math.random()*2.5+.5;
-  s.style.cssText=`position:absolute;left:${Math.random()*100}vw;top:${Math.random()*70}vh;
+const stL = document.getElementById('starsLayer');
+for (let i = 0; i < 160; i++) {
+  const s = document.createElement('div'), sz = Math.random() * 2.5 + .5;
+  s.style.cssText = `position:absolute;left:${Math.random() * 100}vw;top:${Math.random() * 70}vh;
     width:${sz}px;height:${sz}px;border-radius:50%;
-    background:rgba(255,255,255,${.4+Math.random()*.6});
-    animation:starTwinkle ${2+Math.random()*4}s ${Math.random()*4}s ease-in-out infinite alternate;`;
+    background:rgba(255,255,255,${.4 + Math.random() * .6});
+    animation:starTwinkle ${2 + Math.random() * 4}s ${Math.random() * 4}s ease-in-out infinite alternate;`;
   stL.appendChild(s);
 }
-const stStyle=document.createElement('style');
-stStyle.textContent='@keyframes starTwinkle{from{opacity:.2;transform:scale(1)}to{opacity:1;transform:scale(1.6)}}';
+const stStyle = document.createElement('style');
+stStyle.textContent = '@keyframes starTwinkle{from{opacity:.2;transform:scale(1)}to{opacity:1;transform:scale(1.6)}}';
 document.head.appendChild(stStyle);
 
 // ═══════════════════════════════════════════════
 // SKY CANVAS
 // ═══════════════════════════════════════════════
-const skyCvs=document.getElementById('skyCanvas');
-const sCtx=skyCvs.getContext('2d');
-let skyPts=[];
-function sResize(){skyCvs.width=innerWidth;skyCvs.height=innerHeight;}
-sResize();window.addEventListener('resize',sResize);
-function initSky(){
-  skyPts=[];
-  const th=getThemeName(new Date().getHours());
-  const n=th==='day'?50:130;
-  for(let i=0;i<n;i++){
-    if(th==='day'){
-      skyPts.push({x:Math.random()*innerWidth,y:Math.random()*innerHeight,
-        r:1+Math.random()*2,vx:(Math.random()-.5)*.4,vy:-.2-Math.random()*.5,a:.1+Math.random()*.3,type:'pollen'});
-    }else{
-      skyPts.push({x:Math.random()*innerWidth,y:Math.random()*innerHeight,
-        len:10+Math.random()*20,speed:5+Math.random()*7,a:.05+Math.random()*.18,type:'rain'});
+const skyCvs = document.getElementById('skyCanvas');
+const sCtx = skyCvs.getContext('2d');
+let skyPts = [];
+function sResize() { skyCvs.width = innerWidth; skyCvs.height = innerHeight; }
+sResize(); window.addEventListener('resize', sResize);
+function initSky() {
+  skyPts = [];
+  const th = getThemeName(new Date().getHours());
+  const n = th === 'day' ? 50 : 130;
+  for (let i = 0; i < n; i++) {
+    if (th === 'day') {
+      skyPts.push({x: Math.random() * innerWidth, y: Math.random() * innerHeight, r: 1 + Math.random() * 2, vx: (Math.random() - .5) * .4, vy: -.2 - Math.random() * .5, a: .1 + Math.random() * .3, type: 'pollen'});
+    } else {
+      skyPts.push({x: Math.random() * innerWidth, y: Math.random() * innerHeight, len: 10 + Math.random() * 20, speed: 5 + Math.random() * 7, a: .05 + Math.random() * .18, type: 'rain'});
     }
   }
 }
 initSky();
-function drawSky(){
-  sCtx.clearRect(0,0,skyCvs.width,skyCvs.height);
-  const th=getThemeName(new Date().getHours());
-  skyPts.forEach(p=>{
-    if(p.type==='rain'){
-      sCtx.beginPath();sCtx.moveTo(p.x,p.y);sCtx.lineTo(p.x-1,p.y+p.len);
-      sCtx.strokeStyle=th==='evening'?`rgba(251,146,60,${p.a})`:`rgba(147,197,253,${p.a})`;
-      sCtx.lineWidth=.8;sCtx.stroke();
-      p.y+=p.speed;if(p.y>skyCvs.height+p.len){p.y=-p.len;p.x=Math.random()*skyCvs.width;}
-    }else{
-      sCtx.beginPath();sCtx.arc(p.x,p.y,p.r,0,Math.PI*2);
-      sCtx.fillStyle=`rgba(251,191,36,${p.a})`;sCtx.fill();
-      p.x+=p.vx;p.y+=p.vy;if(p.y<-10){p.y=skyCvs.height+10;p.x=Math.random()*skyCvs.width;}
+function drawSky() {
+  sCtx.clearRect(0, 0, skyCvs.width, skyCvs.height);
+  const th = getThemeName(new Date().getHours());
+  skyPts.forEach(p => {
+    if (p.type === 'rain') {
+      sCtx.beginPath(); sCtx.moveTo(p.x, p.y); sCtx.lineTo(p.x - 1, p.y + p.len);
+      sCtx.strokeStyle = th === 'evening' ? `rgba(251,146,60,${p.a})` : `rgba(147,197,253,${p.a})`;
+      sCtx.lineWidth = .8; sCtx.stroke();
+      p.y += p.speed; if (p.y > skyCvs.height + p.len) { p.y = -p.len; p.x = Math.random() * skyCvs.width; }
+    } else {
+      sCtx.beginPath(); sCtx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      sCtx.fillStyle = `rgba(251,191,36,${p.a})`; sCtx.fill();
+      p.x += p.vx; p.y += p.vy; if (p.y < -10) { p.y = skyCvs.height + 10; p.x = Math.random() * skyCvs.width; }
     }
   });
   requestAnimationFrame(drawSky);
 }
 drawSky();
-setInterval(initSky,60000);
+setInterval(initSky, 60000);
 
 // ═══════════════════════════════════════════════
 // INIT
