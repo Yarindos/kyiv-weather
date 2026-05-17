@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Погода · Київ</title>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@300;400;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0b0f1a;
+    --surface: rgba(255,255,255,0.04);
+    --border: rgba(255,255,255,0.08);
+    --text: #e8eaf0;
+    --muted: rgba(232,234,240,0.45);
+    --blue: #3b82f6;
+    --yellow: #fbbf24;
+    --rain: #60a5fa;
+    --sun: #fde68a;
+    --cloud: #94a3b8;
+    --glow-blue: rgba(59,130,246,0.18);
+    --glow-yellow: rgba(251,191,36,0.12);
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* Animated background */
+  .bg-mesh {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background:
+      radial-gradient(ellipse 60% 50% at 20% 20%, rgba(59,130,246,0.12) 0%, transparent 70%),
+      radial-gradient(ellipse 50% 40% at 80% 70%, rgba(251,191,36,0.07) 0%, transparent 70%),
+      radial-gradient(ellipse 80% 60% at 50% 100%, rgba(30,58,138,0.15) 0%, transparent 60%);
+    animation: meshMove 12s ease-in-out infinite alternate;
+  }
+  @keyframes meshMove {
+    0%   { opacity: 0.8; transform: scale(1); }
+    100% { opacity: 1;   transform: scale(1.05); }
+  }
+
+  /* Rain animation */
+  .rain-canvas {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.25;
+  }
+
+  .wrapper {
+    position: relative; z-index: 1;
+    max-width: 860px; margin: 0 auto;
+    padding: 48px 24px 80px;
+  }
+
+  /* Header */
+  header {
+    display: flex; align-items: flex-end; justify-content: space-between;
+    margin-bottom: 52px;
+    animation: fadeUp 0.7s ease both;
+  }
+  .city {
+    font-family: 'Unbounded', sans-serif;
+    font-size: clamp(2rem, 6vw, 3.5rem);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    background: linear-gradient(135deg, #e8eaf0 0%, #60a5fa 60%, #fbbf24 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .flag { font-size: 2rem; margin-left: 12px; vertical-align: middle; }
+  .updated {
+    font-size: 0.75rem;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding-bottom: 6px;
+  }
+
+  /* Current weather card */
+  .current-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 40px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 24px;
+    align-items: center;
+    margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
+    animation: fadeUp 0.7s 0.1s ease both;
+  }
+  .current-card::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, var(--glow-blue), transparent 60%);
+    border-radius: 24px;
+  }
+  .current-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+  .current-temp {
+    font-family: 'Unbounded', sans-serif;
+    font-size: clamp(4rem, 12vw, 7rem);
+    font-weight: 300;
+    line-height: 1;
+    letter-spacing: -0.04em;
+    color: var(--text);
+  }
+  .current-temp sup {
+    font-size: 0.35em;
+    vertical-align: super;
+    color: var(--blue);
+  }
+  .current-desc {
+    font-size: 1.1rem;
+    color: var(--muted);
+    margin-top: 8px;
+    font-weight: 300;
+  }
+  .current-icon {
+    font-size: clamp(4rem, 10vw, 6rem);
+    text-align: center;
+    filter: drop-shadow(0 0 24px rgba(96,165,250,0.4));
+    animation: floatIcon 4s ease-in-out infinite;
+  }
+  @keyframes floatIcon {
+    0%, 100% { transform: translateY(0); }
+    50%       { transform: translateY(-10px); }
+  }
+
+  /* Week forecast */
+  .section-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 16px;
+    animation: fadeUp 0.7s 0.2s ease both;
+  }
+  .week-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .day-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 20px 14px;
+    text-align: center;
+    transition: transform 0.25s ease, border-color 0.25s ease, background 0.25s ease;
+    cursor: default;
+    animation: fadeUp 0.6s ease both;
+  }
+  .day-card:hover {
+    transform: translateY(-6px);
+    border-color: rgba(59,130,246,0.35);
+    background: rgba(59,130,246,0.07);
+  }
+  .day-card:nth-child(1) { animation-delay: 0.25s; }
+  .day-card:nth-child(2) { animation-delay: 0.32s; }
+  .day-card:nth-child(3) { animation-delay: 0.39s; }
+  .day-card:nth-child(4) { animation-delay: 0.46s; }
+  .day-card:nth-child(5) { animation-delay: 0.53s; }
+
+  .day-name {
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  .day-icon { font-size: 1.8rem; margin-bottom: 10px; line-height: 1; }
+  .day-temp {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 400;
+    color: var(--text);
+    letter-spacing: -0.02em;
+  }
+  .day-temp span { font-size: 0.6em; color: var(--blue); }
+  .rain-bar-wrap {
+    margin-top: 12px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 99px;
+    height: 4px;
+    overflow: hidden;
+  }
+  .rain-bar {
+    height: 100%;
+    border-radius: 99px;
+    background: linear-gradient(90deg, var(--blue), #818cf8);
+    transition: width 1s 0.8s ease;
+    width: 0;
+  }
+  .rain-pct {
+    font-size: 0.65rem;
+    color: var(--rain);
+    margin-top: 6px;
+    opacity: 0.8;
+  }
+
+  /* Today highlight */
+  .day-card.today {
+    border-color: rgba(251,191,36,0.3);
+    background: rgba(251,191,36,0.05);
+  }
+  .day-card.today .day-name { color: var(--yellow); }
+  .today-badge {
+    font-size: 0.55rem;
+    background: var(--yellow);
+    color: #0b0f1a;
+    border-radius: 99px;
+    padding: 2px 7px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    display: inline-block;
+    margin-bottom: 8px;
+  }
+
+  /* Footer */
+  footer {
+    margin-top: 48px;
+    text-align: center;
+    font-size: 0.72rem;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+    animation: fadeUp 0.7s 0.7s ease both;
+  }
+  footer span { color: var(--blue); }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(22px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (max-width: 580px) {
+    .week-grid { grid-template-columns: repeat(3, 1fr); }
+    .week-grid .day-card:nth-child(4),
+    .week-grid .day-card:nth-child(5) { grid-column: span 1; }
+    .current-card { grid-template-columns: 1fr; text-align: center; }
+    .current-icon { order: -1; }
+  }
+  @media (max-width: 380px) {
+    .week-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+<canvas class="rain-canvas" id="rain"></canvas>
+<div class="bg-mesh"></div>
+
+<div class="wrapper">
+  <header>
+    <div>
+      <div class="city">Київ <span class="flag">🇺🇦</span></div>
+    </div>
+    <div class="updated" id="updatedTime">оновлено зараз</div>
+  </header>
+
+  <div class="current-card">
+    <div>
+      <div class="current-label">Зараз · Неділя</div>
+      <div class="current-temp">18<sup>°C</sup></div>
+      <div class="current-desc">🌧 Дрібний дощ</div>
+    </div>
+    <div class="current-icon">🌧</div>
+  </div>
+
+  <div class="section-label">Прогноз на тиждень</div>
+  <div class="week-grid" id="weekGrid"></div>
+
+  <footer>
+    Дані: Open-Meteo · Побудовано з <span>♥</span> для Києва
+  </footer>
+</div>
+
+<script>
+// Weather data (real, May 17 2026)
+const days = [
+  { date:'2026-05-17', name:'Нд', high:22, rain:20, icon:'🌦' },
+  { date:'2026-05-18', name:'Пн', high:22, rain:45, icon:'🌧' },
+  { date:'2026-05-19', name:'Вт', high:26, rain:25, icon:'⛅' },
+  { date:'2026-05-20', name:'Ср', high:25, rain:40, icon:'🌦' },
+  { date:'2026-05-21', name:'Чт', high:26, rain:35, icon:'⛅' },
+];
+
+const grid = document.getElementById('weekGrid');
+
+days.forEach((d, i) => {
+  const isToday = i === 0;
+  const card = document.createElement('div');
+  card.className = 'day-card' + (isToday ? ' today' : '');
+  card.innerHTML = `
+    ${isToday ? '<div class="today-badge">Сьогодні</div>' : ''}
+    <div class="day-name">${d.name}</div>
+    <div class="day-icon">${d.icon}</div>
+    <div class="day-temp">${d.high}<span>°</span></div>
+    <div class="rain-bar-wrap"><div class="rain-bar" data-pct="${d.rain}"></div></div>
+    <div class="rain-pct">💧 ${d.rain}%</div>
+  `;
+  grid.appendChild(card);
+});
+
+// Animate bars after render
+setTimeout(() => {
+  document.querySelectorAll('.rain-bar').forEach(bar => {
+    bar.style.width = bar.dataset.pct + '%';
+  });
+}, 100);
+
+// Updated time
+const now = new Date();
+document.getElementById('updatedTime').textContent =
+  'оновлено ' + now.toLocaleTimeString('uk-UA', {hour:'2-digit', minute:'2-digit'});
+
+// Rain canvas animation
+const canvas = document.getElementById('rain');
+const ctx = canvas.getContext('2d');
+let drops = [];
+
+function resize() {
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+for (let i = 0; i < 120; i++) {
+  drops.push({
+    x: Math.random() * window.innerWidth,
+    y: Math.random() * window.innerHeight,
+    len: 10 + Math.random() * 20,
+    speed: 4 + Math.random() * 6,
+    alpha: 0.1 + Math.random() * 0.4,
+  });
+}
+
+function drawRain() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drops.forEach(d => {
+    ctx.beginPath();
+    ctx.moveTo(d.x, d.y);
+    ctx.lineTo(d.x - 1, d.y + d.len);
+    ctx.strokeStyle = `rgba(147,197,253,${d.alpha})`;
+    ctx.lineWidth = 0.8;
+    ctx.stroke();
+    d.y += d.speed;
+    if (d.y > canvas.height + d.len) {
+      d.y = -d.len;
+      d.x = Math.random() * canvas.width;
+    }
+  });
+  requestAnimationFrame(drawRain);
+}
+drawRain();
+</script>
+</body>
+</html>
